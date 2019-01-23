@@ -4,9 +4,12 @@ package org.greenstand.android.TreeTracker.fragments
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import android.support.v4.app.Fragment
+import android.support.v4.app.FragmentTransaction
+import android.support.v7.app.AppCompatActivity
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.Menu
@@ -23,19 +26,16 @@ import android.widget.RadioGroup
 import android.widget.RadioGroup.OnCheckedChangeListener
 import android.widget.TextView
 import android.widget.Toast
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.fragment_settings.*
-import kotlinx.android.synthetic.main.fragment_settings.view.*
 
 import org.greenstand.android.TreeTracker.R
 import org.greenstand.android.TreeTracker.utilities.ValueHelper
 import timber.log.Timber
 
-class SettingsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnCheckedChangeListener, TextWatcher {
+class SettingsFragment : Fragment(), OnClickListener, OnCheckedChangeListener, TextWatcher {
 
-    private val fragment: androidx.fragment.app.Fragment? = null
+    private val fragment: Fragment? = null
     private val bundle: Bundle? = null
-    private val fragmentTransaction: androidx.fragment.app.FragmentTransaction? = null
+    private val fragmentTransaction: FragmentTransaction? = null
     private var mSharedPreferences: SharedPreferences? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,20 +60,20 @@ class SettingsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnCh
         mSharedPreferences = activity!!.getSharedPreferences(
                 "org.greenstand.android", Context.MODE_PRIVATE)
 
-        activity?.toolbarTitle?.setText(R.string.settings)
+        (activity!!.findViewById(R.id.toolbar_title) as TextView).setText(R.string.settings)
         //		((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(R.string.settings);
         (activity as AppCompatActivity).supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
-        val whichSettings = v.fragmentSettingsWhichSettings
+        val whichSettings = v.findViewById(R.id.fragment_settings_which_settings) as RadioGroup
         whichSettings.setOnCheckedChangeListener(this@SettingsFragment)
 
-        val manualRadioSettings = v.fragmentSettingsManualSettingsRadioGroup
+        val manualRadioSettings = v.findViewById(R.id.fragment_settings_manual_settings_radio_group) as RadioGroup
         manualRadioSettings.setOnCheckedChangeListener(this@SettingsFragment)
 
-        val saveAndEdit = v.fragmentSettingsSaveAndEdit
+        val saveAndEdit = v.findViewById(R.id.fragment_settings_save_and_edit) as CheckBox
         saveAndEdit.isChecked = mSharedPreferences!!.getBoolean(ValueHelper.SAVE_AND_EDIT, false)
 
-        val nextUpdate = v.fragmentSettingsNextUpdate
+        val nextUpdate = v.findViewById(R.id.fragment_settings_next_update) as EditText
         nextUpdate.addTextChangedListener(this@SettingsFragment)
 
         nextUpdate.setText(Integer.toString(mSharedPreferences!!.getInt(
@@ -81,7 +81,7 @@ class SettingsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnCh
                 ValueHelper.TIME_TO_NEXT_UPDATE_GLOBAL_SETTING,
                 ValueHelper.TIME_TO_NEXT_UPDATE_DEFAULT_SETTING))))
 
-        val gpsAcc = v.fragmentSettingsGpsAccuracy
+        val gpsAcc = v.findViewById(R.id.fragment_settings_gps_accuracy) as TextView
         if (mSharedPreferences!!.getBoolean(ValueHelper.TREE_TRACKER_SETTINGS_USED, true)) {
             whichSettings.check(R.id.fragment_settings_treetracker)
 
@@ -99,7 +99,7 @@ class SettingsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnCh
 
             nextUpdate.isEnabled = false
         } else {
-            val manualSettings = v.fragmentSettingsManualSettings
+            val manualSettings = v.findViewById(R.id.fragment_settings_manual_settings) as LinearLayout
             whichSettings.check(R.id.fragment_settings_manual)
             manualSettings.visibility = View.VISIBLE
             nextUpdate.isEnabled = true
@@ -122,7 +122,7 @@ class SettingsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnCh
             }
         }
 
-        val submitBtn = v.fragmentSettingsSubmit
+        val submitBtn = v.findViewById(R.id.fragment_settings_submit) as Button
         submitBtn.setOnClickListener(this@SettingsFragment)
 
         for (i in 0 until manualRadioSettings.childCount) {
@@ -140,30 +140,29 @@ class SettingsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnCh
         v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING)
 
         when (v.id) {
-            R.id.fragmentSettingsSubmit -> {
+            R.id.fragment_settings_submit -> {
 
-                val radioGroup = activity!!.fragmentSettingsWhichSettings
-                val saveAndEdit = activity!!.fragmentSettingsSaveAndEdit
+                val radioGroup = activity!!.findViewById(R.id.fragment_settings_which_settings) as RadioGroup
+                val saveAndEdit = activity!!.findViewById(R.id.fragment_settings_save_and_edit) as CheckBox
 
-                if (radioGroup?.checkedRadioButtonId == R.id.fragment_settings_treetracker) {
-                    mSharedPreferences?.edit()?.putBoolean(ValueHelper.TREE_TRACKER_SETTINGS_USED, true)?.commit()
+                if (radioGroup.checkedRadioButtonId == R.id.fragment_settings_treetracker) {
+                    mSharedPreferences!!.edit().putBoolean(ValueHelper.TREE_TRACKER_SETTINGS_USED, true).commit()
 
                     val acc = mSharedPreferences!!.getInt(ValueHelper.MAIN_DB_MIN_ACCURACY, ValueHelper.MIN_ACCURACY_DEFAULT_SETTING)
                     val nextUpdate = mSharedPreferences!!.getInt(ValueHelper.MAIN_DB_NEXT_UPDATE, ValueHelper.TIME_TO_NEXT_UPDATE_DEFAULT_SETTING)
 
-                    mSharedPreferences?.edit()?.putInt(ValueHelper.MIN_ACCURACY_GLOBAL_SETTING, acc)?.commit()
-                    mSharedPreferences?.edit()?.putInt(ValueHelper.TIME_TO_NEXT_UPDATE_GLOBAL_SETTING, nextUpdate)?.commit()
+                    mSharedPreferences!!.edit().putInt(ValueHelper.MIN_ACCURACY_GLOBAL_SETTING, acc).commit()
+                    mSharedPreferences!!.edit().putInt(ValueHelper.TIME_TO_NEXT_UPDATE_GLOBAL_SETTING, nextUpdate).commit()
 
                 } else {
-                    mSharedPreferences?.edit()?.putBoolean(ValueHelper.TREE_TRACKER_SETTINGS_USED, false)?.commit()
+                    mSharedPreferences!!.edit().putBoolean(ValueHelper.TREE_TRACKER_SETTINGS_USED, false).commit()
 
 
-                    val nextUpdate = activity!!.fragmentSettingsNextUpdate
+                    val nextUpdate = activity!!.findViewById(R.id.fragment_settings_next_update) as EditText
 
-                    mSharedPreferences?.edit()?.putInt(ValueHelper.TIME_TO_NEXT_UPDATE_GLOBAL_SETTING,
-                        Integer.parseInt(nextUpdate.text.toString()))?.commit()
+                    mSharedPreferences!!.edit().putInt(ValueHelper.TIME_TO_NEXT_UPDATE_GLOBAL_SETTING, Integer.parseInt(nextUpdate.text.toString())).commit()
 
-                    val accuracyRadioGroup = activity!!.fragmentSettingsManualSettingsRadioGroup
+                    val accuracyRadioGroup = activity!!.findViewById(R.id.fragment_settings_manual_settings_radio_group) as RadioGroup
                     val selectedRadioButton = activity!!.findViewById(accuracyRadioGroup.checkedRadioButtonId) as RadioButton
 
                     if (selectedRadioButton != null) {
@@ -187,10 +186,10 @@ class SettingsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnCh
     }
 
     override fun onCheckedChanged(radiogroup: RadioGroup, checkedId: Int) {
-        val manualSettings = activity!!.fragmentSettingsManualSettings
-        val nextUpdate = activity!!.fragmentSettingsNextUpdate
-        val gpsAcc = activity!!.fragmentSettingsGpsAccuracy
-        val saveAndEdit = activity!!.fragmentSettingsSaveAndEdit
+        val manualSettings = activity!!.findViewById(R.id.fragment_settings_manual_settings) as LinearLayout
+        val nextUpdate = activity!!.findViewById(R.id.fragment_settings_next_update) as EditText
+        val gpsAcc = activity!!.findViewById(R.id.fragment_settings_gps_accuracy) as TextView
+        val saveAndEdit = activity!!.findViewById(R.id.fragment_settings_save_and_edit) as CheckBox
 
 
         if (manualSettings == null) {

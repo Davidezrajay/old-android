@@ -2,7 +2,7 @@ package org.greenstand.android.TreeTracker.application
 
 import android.app.Application
 import android.content.Context
-import androidx.multidex.MultiDex
+import android.support.multidex.MultiDex
 
 import com.crashlytics.android.Crashlytics
 
