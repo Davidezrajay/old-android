@@ -62,7 +62,6 @@
     <string name="first_name">First Name</string>
     <string name="last_name">Last Name</string>
     <string name="email_address">E-mail address</string>
-    <string name="email_address_or_phone_number">Phone number or email address</string>
     <string name="password">Password</string>
     <string name="organization">Organization</string>
     <string name="phone_number">Phone Number</string>
@@ -89,9 +88,7 @@
     <string name="exit">Exit</string>
     <string name="information">Information</string>
     <string name="forgot_password">Forgot password</string>
-    <string name="forgot_password_resetting">Resetting forgotten password</string>
     <string name="sync">Sync</string>
-    <string name="stop">Stop</string>
     <string name="pause">Pause</string>
     <string name="resume">Resume</string>
 
@@ -110,43 +107,19 @@
     <string name="total_trees">Total Trees</string>
     <string name="located">Located</string>
     <string name="to_sync">To Sync</string>
-    <string name="uploaded">Uploaded</string>
-
 
     <string name="location_permission_alert_title">Allow TreeTracker to access location?</string>
     <string name="location_permission_alert_message">Please open Settings and turn on location permission for TreeTracker</string>
 
     <string name="information_text">
-        •	This tree tracking planter app is made to track planted trees while supporting people and organizations that plant, monitor and protect trees.
-        •	Take a picture of your trees and then press sync and your tree data will be uploaded to a map at www.treetracker.org.
-        •	Visit www.GreenStand.org for more details on how this system works.
-        •	Your app requires 10 meters of accuracy to take a photo.
-        •	Email: info@greenstand.com for more access to your data, or a web link with your specific trees.
-        •	This app is under development by Zaven Arra and his cool team of volunteers at GreenStand.org.
-        •	Developers can find the open source project code at www.github.com/greenstand"
-    </string>
-    <string name="confirm_password">Confirm Password</string>
+•	Planter app is a tree tracking tool made to support people and organizations that plant, monitor and protect trees.\n
+•	Use the New Tree feature to put tree markers on your map.\n
+•	Use the Update Tree feature to locate and update your tree status.\n
+•	Your app’s default setting requires ten (10) meter GPS accuracy. Changing your settings to reduced GPS accuracy may affect the Update Tree feature.\n
+•	For full details of how this application can benefit your tree planting project visit  www.TreeTracker.org\n
+•	This Application is in development. If you have any requests or bug reports please email to  support@treetreacker.org\n
+</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="user_not_identified">User Not Identified</string>
-    <string name="change_user">Change User</string>
 
-    <string name="add_tree">ADD TREE</string>
-    <string name="gps_accuracy_length">10 meters</string>
 
-    <!--Strings add for fragment_new_tree.xml-->
-    <string name="tree">tree</string>
-    <string name="five_text_view">5</string>
-    <!--Strings add for fragment_settings.xml-->
-    <string name="ten">10</string>
-    <string name="fifty">50</string>
-    <string name="two_hundred">200</string>
-    <string name="thousand">1000</string>
-    <!--Strings add for fragment_user_details.xml-->
-    <string name="user_details_text">Provide your details to continue</string>
-    <string name="all_set">All set!</string>
-    <!--Strings add for fragment_user_identification.xml-->
-    <string name="identification_text">Show us who you are\.\.\.</string>
-    <string name="start_planting">Start Planting</string>
 </resources>
