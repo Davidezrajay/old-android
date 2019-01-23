@@ -9,15 +9,19 @@ import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.Color
 import android.os.Bundle
-import androidx.core.app.ActivityCompat
-import androidx.appcompat.app.AppCompatActivity
+import android.support.v4.app.ActivityCompat
+import android.support.v4.app.Fragment
+import android.support.v4.app.FragmentTransaction
+import android.support.v7.app.AppCompatActivity
 import android.view.HapticFeedbackConstants
 import android.view.InflateException
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnClickListener
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import com.amazonaws.util.IOUtils
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -29,9 +33,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.fragment_map.*
-import kotlinx.android.synthetic.main.fragment_map.view.*
 import org.greenstand.android.TreeTracker.BuildConfig
 import org.greenstand.android.TreeTracker.R
 import org.greenstand.android.TreeTracker.activities.MainActivity
@@ -46,18 +47,18 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 
-class MapsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnMarkerClickListener, OnMapReadyCallback, View.OnLongClickListener {
+class MapsFragment : Fragment(), OnClickListener, OnMarkerClickListener, OnMapReadyCallback, View.OnLongClickListener {
 
     private var mSettingCallback: LocationDialogListener? = null
 
     private var mSharedPreferences: SharedPreferences? = null
     private var paused = false
 
-    private var fragment: androidx.fragment.app.Fragment? = null
+    private var fragment: Fragment? = null
 
     private var bundle: Bundle? = null
 
-    private var fragmentTransaction: androidx.fragment.app.FragmentTransaction? = null
+    private var fragmentTransaction: FragmentTransaction? = null
     private var mapFragment: SupportMapFragment? = null
 
 
@@ -96,7 +97,7 @@ class MapsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnMarker
         val currentTimestamp = System.currentTimeMillis() / 1000
         val lastTimeStamp = mSharedPreferences!!.getLong(ValueHelper.TIME_OF_LAST_USER_IDENTIFICATION, 0)
         if(currentTimestamp - lastTimeStamp > ValueHelper.IDENTIFICATION_TIMEOUT){
-            activity!!.toolbarTitle.text = resources.getString(R.string.user_not_identified)
+            (activity!!.findViewById(R.id.toolbar_title) as TextView).text = resources.getString(R.string.user_not_identified)
             //reset all sharedPreferences
             val editor = mSharedPreferences!!.edit()
             editor.putLong(ValueHelper.TIME_OF_LAST_USER_IDENTIFICATION, 0)
@@ -108,7 +109,7 @@ class MapsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnMarker
             //
             val cursor = TreeTrackerApplication.getDatabaseManager().queryCursor("SELECT * FROM planter_details WHERE identifier = '$identifier'", null)
             if(cursor.count == 0){
-                activity!!.toolbarTitle.text = resources.getString(R.string.user_not_identified)
+                (activity!!.findViewById(R.id.toolbar_title) as TextView).text = resources.getString(R.string.user_not_identified)
                 // And time them out
                 val editor = mSharedPreferences!!.edit()
                 editor.putLong(ValueHelper.TIME_OF_LAST_USER_IDENTIFICATION, 0)
@@ -118,10 +119,10 @@ class MapsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnMarker
             } else {
                 cursor.moveToFirst()
                 val title = cursor.getString(cursor.getColumnIndex("first_name")) + " " + cursor.getString(cursor.getColumnIndex("last_name"))
-                activity!!.toolbarTitle.text = title
+                (activity!!.findViewById(R.id.toolbar_title) as TextView).text = title
 
                 val photoPath = mSharedPreferences!!.getString(ValueHelper.PLANTER_PHOTO, null)
-                val imageView = view!!.mapUserImage
+                val imageView = view!!.findViewById(R.id.map_user_image) as ImageView
                 if (photoPath != null) {
                     val rotatedBitmap = ImageUtils.decodeBitmap(photoPath, resources.displayMetrics.density)
                     if (rotatedBitmap != null) {
@@ -160,7 +161,7 @@ class MapsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnMarker
         var v : View? = view
 
         try {
-            v = inflater.inflate(R.layout.fragment_map, container, false)
+            v = inflater!!.inflate(R.layout.fragment_map, container, false)
         } catch (e: InflateException) {
             Timber.d(e.localizedMessage);
         }
@@ -181,9 +182,12 @@ class MapsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnMarker
             (activity as AppCompatActivity).supportActionBar!!.show()
         }
 
+
+
+
         (activity as AppCompatActivity).supportActionBar!!.setDisplayHomeAsUpEnabled(false)
 
-        val fab = v!!.addTreeButton
+        val fab = v!!.findViewById(R.id.addTreeButton) as Button
         fab.setOnClickListener(this)
         if (BuildConfig.BUILD_TYPE === "dev") {
             fab.setOnLongClickListener(this)
@@ -191,25 +195,29 @@ class MapsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnMarker
 
         mapFragment!!.getMapAsync(this)
 
+
+        val mapGpsAccuracy = v.findViewById(R.id.fragment_map_gps_accuracy) as TextView
+        val mapGpsAccuracyValue = v.findViewById(R.id.fragment_map_gps_accuracy_value) as TextView
+
         val minAccuracy = mSharedPreferences!!.getInt(ValueHelper.MIN_ACCURACY_GLOBAL_SETTING, ValueHelper.MIN_ACCURACY_DEFAULT_SETTING)
 
-        if (fragmentMapGpsAccuracy != null) {
+        if (mapGpsAccuracy != null) {
             if (MainActivity.mCurrentLocation != null) {
                 if (MainActivity.mCurrentLocation!!.hasAccuracy() && MainActivity.mCurrentLocation!!.accuracy < minAccuracy) {
-                    fragmentMapGpsAccuracy.setTextColor(Color.GREEN)
-                    fragmentMapGpsAccuracyValue.setTextColor(Color.GREEN)
-                    fragmentMapGpsAccuracyValue.text = Integer.toString(Math.round(MainActivity.mCurrentLocation!!.accuracy)) + " " + resources.getString(R.string.meters)
+                    mapGpsAccuracy.setTextColor(Color.GREEN)
+                    mapGpsAccuracyValue.setTextColor(Color.GREEN)
+                    mapGpsAccuracyValue.text = Integer.toString(Math.round(MainActivity.mCurrentLocation!!.accuracy)) + " " + resources.getString(R.string.meters)
                     MainActivity.mAllowNewTreeOrUpdate = true
                 } else {
-                    fragmentMapGpsAccuracy.setTextColor(Color.RED)
+                    mapGpsAccuracy.setTextColor(Color.RED)
                     MainActivity.mAllowNewTreeOrUpdate = false
 
                     if (MainActivity.mCurrentLocation!!.hasAccuracy()) {
-                        fragmentMapGpsAccuracyValue.setTextColor(Color.RED)
-                        fragmentMapGpsAccuracyValue.text = Integer.toString(Math.round(MainActivity.mCurrentLocation!!.accuracy)) + " " + resources.getString(R.string.meters)
+                        mapGpsAccuracyValue.setTextColor(Color.RED)
+                        mapGpsAccuracyValue.text = Integer.toString(Math.round(MainActivity.mCurrentLocation!!.accuracy)) + " " + resources.getString(R.string.meters)
                     } else {
-                        fragmentMapGpsAccuracyValue.setTextColor(Color.RED)
-                        fragmentMapGpsAccuracyValue.text = "N/A"
+                        mapGpsAccuracyValue.setTextColor(Color.RED)
+                        mapGpsAccuracyValue.text = "N/A"
                     }
                 }
             } else {
@@ -219,9 +227,9 @@ class MapsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnMarker
                             arrayOf(android.Manifest.permission.ACCESS_COARSE_LOCATION),
                             Permissions.MY_PERMISSION_ACCESS_COURSE_LOCATION)
                 }
-                fragmentMapGpsAccuracy.setTextColor(Color.RED)
-                fragmentMapGpsAccuracyValue.setTextColor(Color.RED)
-                fragmentMapGpsAccuracyValue.text = "N/A"
+                mapGpsAccuracy.setTextColor(Color.RED)
+                mapGpsAccuracyValue.setTextColor(Color.RED)
+                mapGpsAccuracyValue.text = "N/A"
                 MainActivity.mAllowNewTreeOrUpdate = false
             }
 
@@ -258,7 +266,7 @@ class MapsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnMarker
                         fragment = UserIdentificationFragment()
                         fragmentTransaction = activity!!.supportFragmentManager
                                 .beginTransaction()
-                        fragmentTransaction!!.replace(R.id.containerFragment, fragment as UserIdentificationFragment).addToBackStack(ValueHelper.IDENTIFY_FRAGMENT).commit()
+                        fragmentTransaction!!.replace(R.id.container_fragment, fragment as UserIdentificationFragment).addToBackStack(ValueHelper.IDENTIFY_FRAGMENT).commit()
 
                     } else {
 
@@ -268,7 +276,7 @@ class MapsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnMarker
 
                         fragmentTransaction = activity!!.supportFragmentManager
                                 .beginTransaction()
-                        fragmentTransaction!!.replace(R.id.containerFragment, fragment as NewTreeFragment).addToBackStack(ValueHelper.NEW_TREE_FRAGMENT).commit()
+                        fragmentTransaction!!.replace(R.id.container_fragment, fragment as NewTreeFragment).addToBackStack(ValueHelper.NEW_TREE_FRAGMENT).commit()
 
 
                     }
@@ -399,7 +407,7 @@ class MapsFragment : androidx.fragment.app.Fragment(), OnClickListener, OnMarker
 
         fragmentTransaction = activity!!.supportFragmentManager
                 .beginTransaction()
-        fragmentTransaction!!.replace(R.id.containerFragment, fragment as TreePreviewFragment).addToBackStack(ValueHelper.TREE_PREVIEW_FRAGMENT).commit()
+        fragmentTransaction!!.replace(R.id.container_fragment, fragment as TreePreviewFragment).addToBackStack(ValueHelper.TREE_PREVIEW_FRAGMENT).commit()
         return true
     }
 

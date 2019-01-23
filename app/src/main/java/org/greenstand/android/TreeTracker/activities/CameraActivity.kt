@@ -14,7 +14,7 @@ import android.media.ExifInterface
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
-import androidx.core.app.ActivityCompat
+import android.support.v4.app.ActivityCompat
 import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -53,8 +53,9 @@ class CameraActivity : Activity(), Camera.PictureCallback, View.OnClickListener,
         super.onCreate(savedInstanceState)
         setContentView(R.layout.camera_preview)
 
-        mImageView = cameraPreviewTaken
-        captureButton = buttonCapture
+        mImageView = findViewById(R.id.camera_preview_taken) as ImageView
+
+        captureButton = findViewById(R.id.button_capture) as ImageButton
 
         // Add a listener to the buttons
         captureButton!!.setOnClickListener(this@CameraActivity)

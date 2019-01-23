@@ -4,38 +4,42 @@ package org.greenstand.android.TreeTracker.activities
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.NotificationManager
+import android.app.ProgressDialog
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Color
 import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.appcompat.app.AppCompatActivity
+import android.support.v4.app.ActivityCompat
+import android.support.v4.app.Fragment
+import android.support.v4.app.FragmentTransaction
+import android.support.v4.content.ContextCompat
+import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.Toolbar
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
 import android.widget.Toast
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentTransaction
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.fragment_map.*
-import kotlinx.android.synthetic.main.fragment_new_tree.*
-import kotlinx.android.synthetic.main.fragment_tree_preview.*
 
 import org.greenstand.android.TreeTracker.R
+import org.greenstand.android.TreeTracker.api.Api
 import org.greenstand.android.TreeTracker.managers.DataManager
 import org.greenstand.android.TreeTracker.api.models.responses.UserTree
 import org.greenstand.android.TreeTracker.application.Permissions
 import org.greenstand.android.TreeTracker.application.TreeTrackerApplication
+import org.greenstand.android.TreeTracker.database.DatabaseManager
+import org.greenstand.android.TreeTracker.database.DbHelper
 import org.greenstand.android.TreeTracker.fragments.*
 import org.greenstand.android.TreeTracker.utilities.ValueHelper
+
+import java.io.IOException
 
 import timber.log.Timber
 
@@ -81,6 +85,7 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
 
         setContentView(R.layout.activity_main)
 
+        val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
         supportActionBar!!.setDisplayShowHomeEnabled(true)
         supportActionBar!!.title = ""
@@ -104,7 +109,7 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
 
             val fragmentTransaction = supportFragmentManager
                     .beginTransaction()
-            fragmentTransaction.add(R.id.containerFragment, dataFragment, ValueHelper.DATA_FRAGMENT)
+            fragmentTransaction.add(R.id.container_fragment, dataFragment, ValueHelper.DATA_FRAGMENT)
 
             fragmentTransaction.commit()
 
@@ -118,13 +123,13 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
             editor.putString(ValueHelper.PLANTER_PHOTO, null)
             editor.commit()
 
-            toolbarTitle.text = resources.getString(R.string.user_not_identified)
+            (findViewById(R.id.toolbar_title) as TextView).text = resources.getString(R.string.user_not_identified)
 
 
             fragment = UserIdentificationFragment()
             fragmentTransaction = supportFragmentManager
                     .beginTransaction()
-            fragmentTransaction!!.replace(R.id.containerFragment, fragment as UserIdentificationFragment)
+            fragmentTransaction!!.replace(R.id.container_fragment, fragment as UserIdentificationFragment)
                     .addToBackStack(ValueHelper.IDENTIFY_FRAGMENT).commit()
 
         }else if (mSharedPreferences!!.getBoolean(ValueHelper.TREES_TO_BE_DOWNLOADED_FIRST, false)) {
@@ -136,7 +141,7 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
 
             fragmentTransaction = supportFragmentManager
                     .beginTransaction()
-            fragmentTransaction!!.replace(R.id.containerFragment, fragment as MapsFragment).addToBackStack(ValueHelper.MAP_FRAGMENT).commit()
+            fragmentTransaction!!.replace(R.id.container_fragment, fragment as MapsFragment).addToBackStack(ValueHelper.MAP_FRAGMENT).commit()
 
             if (bundle == null)
                 bundle = Bundle()
@@ -149,7 +154,7 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
 
             fragmentTransaction = supportFragmentManager
                     .beginTransaction()
-            fragmentTransaction!!.replace(R.id.containerFragment, fragment as DataFragment).addToBackStack(ValueHelper.DATA_FRAGMENT).commit()
+            fragmentTransaction!!.replace(R.id.container_fragment, fragment as DataFragment).addToBackStack(ValueHelper.DATA_FRAGMENT).commit()
 
         } else {
             if (userIdentifier != getString(R.string.user_not_identified)) {
@@ -159,7 +164,7 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
 
                 val fragmentTransaction = supportFragmentManager
                         .beginTransaction()
-                fragmentTransaction.replace(R.id.containerFragment, homeFragment).addToBackStack(ValueHelper.MAP_FRAGMENT)
+                fragmentTransaction.replace(R.id.container_fragment, homeFragment).addToBackStack(ValueHelper.MAP_FRAGMENT)
                 fragmentTransaction.commit()
             }else {
                 val editor = mSharedPreferences!!.edit()
@@ -168,13 +173,13 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
                 editor.putString(ValueHelper.PLANTER_PHOTO, null)
                 editor.commit()
 
-                toolbarTitle.text = resources.getString(R.string.user_not_identified)
+                (findViewById(R.id.toolbar_title) as TextView).text = resources.getString(R.string.user_not_identified)
 
 
                 fragment = UserIdentificationFragment()
                 fragmentTransaction = supportFragmentManager
                         .beginTransaction()
-                fragmentTransaction!!.replace(R.id.containerFragment,
+                fragmentTransaction!!.replace(R.id.container_fragment,
                         fragment as UserIdentificationFragment).addToBackStack(ValueHelper.IDENTIFY_FRAGMENT).commit()
             }
         }
@@ -202,7 +207,7 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
                 fragment!!.arguments = bundle
 
                 fragmentTransaction = supportFragmentManager.beginTransaction()
-                fragmentTransaction!!.replace(R.id.containerFragment, fragment as DataFragment).addToBackStack(ValueHelper.DATA_FRAGMENT).commit()
+                fragmentTransaction!!.replace(R.id.container_fragment, fragment as DataFragment).addToBackStack(ValueHelper.DATA_FRAGMENT).commit()
                 for (entry in 0 until fm.backStackEntryCount) {
                     Timber.d("MainActivity " + "Found fragment: " + fm.getBackStackEntryAt(entry).name)
                 }
@@ -222,7 +227,7 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
                 return true;
                 */
             R.id.action_about -> {
-                val someFragment = supportFragmentManager.findFragmentById(R.id.containerFragment)
+                val someFragment = supportFragmentManager.findFragmentById(R.id.container_fragment)
 
                 var aboutIsRunning = false
 
@@ -238,7 +243,7 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
 
                     fragmentTransaction = supportFragmentManager
                             .beginTransaction()
-                    fragmentTransaction!!.replace(R.id.containerFragment, fragment as AboutFragment).addToBackStack(ValueHelper.ABOUT_FRAGMENT).commit()
+                    fragmentTransaction!!.replace(R.id.container_fragment, fragment as AboutFragment).addToBackStack(ValueHelper.ABOUT_FRAGMENT).commit()
                 }
                 for (entry in 0 until fm.backStackEntryCount) {
                     Timber.d("MainActivity " + "Found fragment: " + fm.getBackStackEntryAt(entry).name)
@@ -253,13 +258,13 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
                 editor.putString(ValueHelper.PLANTER_PHOTO, null)
                 editor.commit()
 
-                toolbarTitle.text = resources.getString(R.string.user_not_identified)
+                (findViewById(R.id.toolbar_title) as TextView).text = resources.getString(R.string.user_not_identified)
 
 
                 fragment = UserIdentificationFragment()
                 fragmentTransaction = supportFragmentManager
                         .beginTransaction()
-                fragmentTransaction!!.replace(R.id.containerFragment, fragment as UserIdentificationFragment).addToBackStack(ValueHelper.IDENTIFY_FRAGMENT).commit()
+                fragmentTransaction!!.replace(R.id.container_fragment, fragment as UserIdentificationFragment).addToBackStack(ValueHelper.IDENTIFY_FRAGMENT).commit()
             }
         }
         return super.onOptionsItemSelected(item)
@@ -342,35 +347,41 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
         //int minAccuracy = mSharedPreferences.getInt(ValueHelper.MIN_ACCURACY_GLOBAL_SETTING, 0);
         val minAccuracy = 10
 
-        if (fragmentMapGpsAccuracy != null) {
+        val mapGpsAccuracy = findViewById(R.id.fragment_map_gps_accuracy) as TextView?
+        val mapGpsAccuracyValue = findViewById(R.id.fragment_map_gps_accuracy_value) as TextView?
+
+
+        if (mapGpsAccuracy != null) {
             if (mCurrentLocation != null) {
                 if (mCurrentLocation!!.hasAccuracy() && mCurrentLocation!!.accuracy < minAccuracy) {
-                    fragmentMapGpsAccuracy.setTextColor(Color.GREEN)
-                    fragmentMapGpsAccuracyValue?.setTextColor(Color.GREEN)
-                    fragmentMapGpsAccuracyValue?.text = Integer.toString(Math.round(mCurrentLocation!!.accuracy)) + " " + resources.getString(R.string.meters)
+                    mapGpsAccuracy.setTextColor(Color.GREEN)
+                    mapGpsAccuracyValue?.setTextColor(Color.GREEN)
+                    mapGpsAccuracyValue?.text = Integer.toString(Math.round(mCurrentLocation!!.accuracy)) + " " + resources.getString(R.string.meters)
                     MainActivity.mAllowNewTreeOrUpdate = true
                 } else {
-                    fragmentMapGpsAccuracy.setTextColor(Color.RED)
+                    mapGpsAccuracy.setTextColor(Color.RED)
                     MainActivity.mAllowNewTreeOrUpdate = false
 
                     if (mCurrentLocation!!.hasAccuracy()) {
-                        fragmentMapGpsAccuracyValue?.setTextColor(Color.RED)
-                        fragmentMapGpsAccuracyValue?.text = Integer.toString(Math.round(mCurrentLocation!!.accuracy)) + " " + resources.getString(R.string.meters)
+                        mapGpsAccuracyValue?.setTextColor(Color.RED)
+                        mapGpsAccuracyValue?.text = Integer.toString(Math.round(mCurrentLocation!!.accuracy)) + " " + resources.getString(R.string.meters)
                     } else {
-                        fragmentMapGpsAccuracyValue?.setTextColor(Color.RED)
-                        fragmentMapGpsAccuracyValue?.text = "N/A"
+                        mapGpsAccuracyValue?.setTextColor(Color.RED)
+                        mapGpsAccuracyValue?.text = "N/A"
                     }
                 }
 
                 if (mCurrentLocation!!.hasAccuracy()) {
-                    if (fragmentNewTreeGpsAccuracy != null) {
-                        fragmentNewTreeGpsAccuracy?.text = Integer.toString(Math.round(mCurrentLocation!!.accuracy)) + " " + resources.getString(R.string.meters)
+                    val newTreeGpsAccuracy = findViewById(R.id.fragment_new_tree_gps_accuracy) as TextView?
+
+                    if (newTreeGpsAccuracy != null) {
+                        newTreeGpsAccuracy?.text = Integer.toString(Math.round(mCurrentLocation!!.accuracy)) + " " + resources.getString(R.string.meters)
                     }
                 }
             } else {
-                fragmentMapGpsAccuracy.setTextColor(Color.RED)
-                fragmentMapGpsAccuracyValue?.setTextColor(Color.RED)
-                fragmentMapGpsAccuracyValue?.text = "N/A"
+                mapGpsAccuracy.setTextColor(Color.RED)
+                mapGpsAccuracyValue?.setTextColor(Color.RED)
+                mapGpsAccuracyValue?.text = "N/A"
                 MainActivity.mAllowNewTreeOrUpdate = false
             }
 
@@ -380,12 +391,14 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
                 Location.distanceBetween(MainActivity.mCurrentLocation!!.latitude, MainActivity.mCurrentLocation!!.longitude,
                         MainActivity.mCurrentTreeLocation!!.latitude, MainActivity.mCurrentTreeLocation!!.longitude, results)
 
-                if (fragmentNewTreeDistance != null) {
-                    fragmentNewTreeDistance.text = Integer.toString(Math.round(results[0])) + " " + resources.getString(R.string.meters)
+                val newTreeDistance = findViewById(R.id.fragment_new_tree_distance) as TextView?
+                if (newTreeDistance != null) {
+                    newTreeDistance.text = Integer.toString(Math.round(results[0])) + " " + resources.getString(R.string.meters)
                 }
 
-                if (fragmentTreePreviewDistance != null) {
-                    fragmentTreePreviewDistance.text = Integer.toString(Math.round(results[0])) + " " + resources.getString(R.string.meters)
+                val treePreviewDistance = findViewById(R.id.fragment_tree_preview_distance) as TextView?
+                if (treePreviewDistance != null) {
+                    treePreviewDistance.text = Integer.toString(Math.round(results[0])) + " " + resources.getString(R.string.meters)
                 }
             }
         }
@@ -532,7 +545,7 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
 
                     fragmentTransaction = supportFragmentManager
                             .beginTransaction()
-                    fragmentTransaction!!.replace(R.id.containerFragment, fragment as DataFragment).addToBackStack(ValueHelper.DATA_FRAGMENT).commit()
+                    fragmentTransaction!!.replace(R.id.container_fragment, fragment as DataFragment).addToBackStack(ValueHelper.DATA_FRAGMENT).commit()
 
                 }
             }
